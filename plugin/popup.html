@@ -7,12 +7,35 @@
         body {
             font-family: sans-serif;
             margin: 10px;
+            min-width: 260px;
         }
 
         label,
-        input {
+        input,
+        button {
             display: block;
             margin-bottom: 8px;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        #analysis-status {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #ddd;
+        }
+
+        #analysis-error {
+            margin: 0 0 8px;
+            font-size: 13px;
+            color: #b00020;
+            word-break: break-word;
+        }
+
+        #analysis-error.pending {
+            color: #555;
         }
     </style>
 </head>
@@ -22,6 +45,12 @@
     <input type="text" id="server" placeholder="https://your-server.com">
     <button id="save">Save</button>
     <div id="status"></div>
+
+    <div id="analysis-status" hidden>
+        <p id="analysis-error"></p>
+        <button id="retry">Try again</button>
+    </div>
+
     <script src="ext.js"></script>
     <script src="popup.js"></script>
 

@@ -13,6 +13,7 @@ let skipHandler = null;
 let waitVideoTimeout = null;
 let pendingPollTimeout = null;
 let fetchGeneration = 0;
+let analysisState = { status: 'idle', error: null, link: null };
 
 function getVideoIdFromUrl(url) {
     const match = url.match(/[?&]v=([^&]+)/);
@@ -43,9 +44,22 @@ function isStaleFetch(link, generation) {
     return link !== video_ref || generation !== fetchGeneration;
 }
 
-function buildTimestampsUrl(link) {
+function setAnalysisState(status, error = null) {
+    analysisState = { status, error, link: video_ref || null };
+    ext.runtime.sendMessage({
+        type: 'analysis-status',
+        status: analysisState.status,
+        error: analysisState.error,
+        link: analysisState.link,
+    }).catch(() => {});
+}
+
+function buildTimestampsUrl(link, { retry = false } = {}) {
     const params = new URLSearchParams();
     params.append('link', link);
+    if (retry) {
+        params.append('retry', '1');
+    }
     return api_url + api_path + '?' + params.toString();
 }
 
@@ -56,8 +70,8 @@ function schedulePendingPoll(link, generation) {
     }, ANALYSIS_POLL_MS);
 }
 
-function fetchTimestamps(link, generation) {
-    const url = buildTimestampsUrl(link);
+function fetchTimestamps(link, generation, { retry = false } = {}) {
+    const url = buildTimestampsUrl(link, { retry });
     console.log("[YouTube Tracker] Sending GET request to:", url);
 
     fetch(url, {
@@ -76,13 +90,16 @@ function fetchTimestamps(link, generation) {
             }
 
             if (response.status === 202 || data.status === 'pending') {
+                setAnalysisState('pending');
                 console.log("[YouTube Tracker] Analysis pending, polling again in", ANALYSIS_POLL_MS, "ms");
                 schedulePendingPoll(link, generation);
                 return;
             }
 
             if (data.status === 'failed') {
-                console.error("[YouTube Tracker] Analysis failed:", data.error || data);
+                const error = data.error || 'Analysis failed';
+                setAnalysisState('failed', error);
+                console.error("[YouTube Tracker] Analysis failed:", error);
                 return;
             }
 
@@ -92,6 +109,7 @@ function fetchTimestamps(link, generation) {
 
             if (data.status === 'ready') {
                 timestamps = parseIntervals(data);
+                setAnalysisState('ready');
                 console.log('[YouTube Tracker] Loaded', timestamps.length, 'skip segment(s)');
                 return;
             }
@@ -146,17 +164,29 @@ function trackVideo(video) {
     video.addEventListener('timeupdate', skipHandler);
 }
 
-function getServer(link) {
+function getServer(link, { retry = false } = {}) {
     cancelPendingPoll();
     fetchGeneration += 1;
 
     if (!link || !api_url) {
         timestamps = [];
+        setAnalysisState('idle');
         return;
     }
 
     timestamps = [];
-    fetchTimestamps(link, fetchGeneration);
+    if (retry) {
+        setAnalysisState('pending');
+    }
+    fetchTimestamps(link, fetchGeneration, { retry });
+}
+
+function retryAnalysis() {
+    if (!video_ref) {
+        return { ok: false, error: 'No video loaded' };
+    }
+    getServer(video_ref, { retry: true });
+    return { ok: true };
 }
 
 function waitForVideo() {
@@ -203,8 +233,21 @@ function onNewVideo(videoId) {
     console.log("[Youtube Tracker] New video loaded:", videoId);
     stopTracking();
     timestamps = [];
+    setAnalysisState('idle');
     waitForVideo();
 }
+
+ext.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message.type === 'get-status') {
+        sendResponse(analysisState);
+        return;
+    }
+
+    if (message.type === 'retry-analysis') {
+        sendResponse(retryAnalysis());
+        return;
+    }
+});
 
 function handleUrlChange() {
     const newVideoId = getVideoIdFromUrl(location.href);

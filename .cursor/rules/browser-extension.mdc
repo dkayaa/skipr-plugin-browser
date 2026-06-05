@@ -36,6 +36,7 @@ Load `ext.js` before `processor.js` (manifest `content_scripts`) and before `pop
 - Detects SPA navigation via History API hooks + URL polling — preserve this when refactoring video-change detection.
 - Skip check uses throttled `timeupdate` on the active `<video>` (250ms); clear listeners in `stopTracking()` before re-attaching on video change.
 - API returns `pending` (HTTP 202), `ready` with `intervals` (HTTP 200), or `failed` with `error` — poll every 3s only while pending; log failures, do not poll.
+- Manual retry: popup **Try again** → `retry-analysis` message → `GET` with `retry=1` once; subsequent pending polls omit `retry`.
 - Validate ready responses with `parseIntervals()`; cancel polls and ignore stale fetches via `fetchGeneration` + `video_ref`.
 
 ## Popup (`popup.js` / `popup.html`)

@@ -42,7 +42,7 @@ Skip logic uses `start_time` and `end_time` from each interval (seconds).
 { "status": "failed", "error": "Failed to fetch transcript for video ..." }
 ```
 
-The extension logs the error and does not poll.
+The extension logs the error and does not poll. Click **Try again** in the popup to re-request analysis (`retry=1` query param); pending polls after that omit `retry`.
 
 ## Project structure
 
