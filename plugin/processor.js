@@ -14,6 +14,9 @@ let waitVideoTimeout = null;
 let pendingPollTimeout = null;
 let fetchGeneration = 0;
 let analysisState = { status: 'idle', error: null, link: null };
+let notifyLevel = 'minimal';
+
+const NOTIFY_LEVELS = new Set(['off', 'minimal', 'detailed']);
 
 function normalizeApiUrl(url) {
     if (!url) {
@@ -37,7 +40,11 @@ function parseIntervals(data) {
         return typeof entry.start_time === 'number'
             && typeof entry.end_time === 'number'
             && entry.start_time < entry.end_time;
-    });
+    }).map((entry) => ({
+        start_time: entry.start_time,
+        end_time: entry.end_time,
+        orgs: Array.isArray(entry.orgs) ? entry.orgs.filter((org) => typeof org === 'string') : [],
+    }));
 }
 
 function cancelPendingPoll() {
@@ -145,10 +152,12 @@ function checkAndSkip(video) {
 
     const curTime = video.currentTime;
     for (let i = 0; i < timestamps.length; i++) {
-        const { start_time, end_time } = timestamps[i];
+        const segment = timestamps[i];
+        const { start_time, end_time } = segment;
         if (start_time <= curTime && curTime < end_time) {
             console.log("[YouTube Tracker] Skipping segment", start_time, "–", end_time);
             video.currentTime = end_time;
+            showSkipNotification(segment, notifyLevel, video);
             return;
         }
     }
@@ -218,17 +227,26 @@ function waitForVideo() {
     }
 }
 
-function loadServerUrl() {
-    return getStorage().get('server')
+function loadSettings() {
+    return getStorage().get(['server', 'notifyLevel'])
         .then((result) => {
-            const next = normalizeApiUrl(result.server || '');
-            if (next === api_url) {
-                return;
+            const nextUrl = normalizeApiUrl(result.server || '');
+            const nextNotify = NOTIFY_LEVELS.has(result.notifyLevel) ? result.notifyLevel : 'minimal';
+            const urlChanged = nextUrl !== api_url;
+            const notifyChanged = nextNotify !== notifyLevel;
+
+            api_url = nextUrl;
+            notifyLevel = nextNotify;
+
+            if (urlChanged) {
+                console.log("[YouTube Tracker] API URL updated:", api_url || '(not set)');
             }
 
-            api_url = next;
-            console.log("[YouTube Tracker] API URL updated:", api_url || '(not set)');
-            if (video_ref) {
+            if (notifyChanged) {
+                console.log("[YouTube Tracker] Notification level:", notifyLevel);
+            }
+
+            if (urlChanged && video_ref) {
                 getServer(video_ref);
             }
         })
@@ -238,13 +256,13 @@ function loadServerUrl() {
 }
 
 function init() {
-    loadServerUrl().then(() => {
+    loadSettings().then(() => {
         if (currentVideoId) {
             waitForVideo();
         }
     });
 
-    setInterval(loadServerUrl, STORAGE_POLL_MS);
+    setInterval(loadSettings, STORAGE_POLL_MS);
 }
 
 let currentVideoId = getVideoIdFromUrl(location.href);
@@ -252,6 +270,7 @@ let currentVideoId = getVideoIdFromUrl(location.href);
 function onNewVideo(videoId) {
     console.log("[Youtube Tracker] New video loaded:", videoId);
     stopTracking();
+    hideSkipToast();
     timestamps = [];
     setAnalysisState('idle');
     waitForVideo();

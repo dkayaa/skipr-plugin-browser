@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Skippy",
-    "version": "1.5",
+    "version": "1.6",
     "description": "Skips Video Content on Youtube Videos",
     "browser_specific_settings": {
         "gecko": {
@@ -38,6 +38,7 @@
             ],
             "js": [
                 "ext.js",
+                "notifications.js",
                 "processor.js"
             ]
         }

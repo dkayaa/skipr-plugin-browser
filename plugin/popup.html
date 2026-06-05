@@ -154,6 +154,10 @@
             padding: 14px;
         }
 
+        .section + .section {
+            margin-top: 12px;
+        }
+
         .section-label {
             display: block;
             font-size: 11px;
@@ -184,7 +188,8 @@
             gap: 8px;
         }
 
-        input[type="text"] {
+        input[type="text"],
+        select {
             flex: 1;
             min-width: 0;
             padding: 9px 11px;
@@ -197,11 +202,17 @@
             transition: border-color 0.15s, box-shadow 0.15s;
         }
 
+        select {
+            width: 100%;
+            cursor: pointer;
+        }
+
         input[type="text"]::placeholder {
             color: #6b6b80;
         }
 
-        input[type="text"]:focus {
+        input[type="text"]:focus,
+        select:focus {
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.15);
         }
@@ -409,6 +420,16 @@
                 <input type="text" id="server" placeholder="http://localhost:8090" spellcheck="false">
                 <button id="save" class="btn-primary" type="button">Save</button>
             </div>
+        </section>
+
+        <section class="section">
+            <label class="section-label" for="notify-level">Skip notifications</label>
+            <p class="hint">Brief on-player toast when a segment is skipped</p>
+            <select id="notify-level">
+                <option value="off">Off</option>
+                <option value="minimal" selected>Minimal</option>
+                <option value="detailed">Detailed (show sponsors)</option>
+            </select>
         </section>
 
         <div id="toast" class="toast" hidden></div>

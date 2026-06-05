@@ -117,19 +117,32 @@ function refreshAnalysisStatus() {
 
 document.addEventListener('DOMContentLoaded', () => {
     const serverInput = document.getElementById('server');
+    const notifySelect = document.getElementById('notify-level');
     const storage = getStorage();
 
-    storage.get('server').then((result) => {
+    storage.get(['server', 'notifyLevel']).then((result) => {
         if (result.server) {
             serverInput.value = result.server;
+        }
+        if (result.notifyLevel) {
+            notifySelect.value = result.notifyLevel;
         }
     });
 
     document.getElementById('save').addEventListener('click', () => {
         const server = serverInput.value.trim().replace(/\/+$/, '');
-        storage.set({ server }).then(() => {
+        storage.set({
+            server,
+            notifyLevel: notifySelect.value,
+        }).then(() => {
             serverInput.value = server;
-            showToast('Server URL saved', 'success');
+            showToast('Settings saved', 'success');
+        });
+    });
+
+    notifySelect.addEventListener('change', () => {
+        storage.set({ notifyLevel: notifySelect.value }).then(() => {
+            showToast('Notification preference saved', 'success');
         });
     });
 
