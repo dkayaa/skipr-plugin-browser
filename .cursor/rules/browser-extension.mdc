@@ -27,7 +27,7 @@ Load `ext.js` before `processor.js` (manifest `content_scripts`) and before `pop
 - API fetch permission lives in `host_permissions`; `storage` stays in `permissions`.
 - Bump `version` for any user-facing release.
 - `browser_specific_settings.gecko` is Firefox-only (add-on ID); Chrome ignores it.
-- No background service worker unless new features require one.
+- `background.js` sets toolbar badge colors: green (Active/ready), yellow (Pending), red (Failed); clears on idle.
 - Content scripts only run on `https://www.youtube.com/watch*` — broaden matches deliberately.
 
 ## Content script (`processor.js`)

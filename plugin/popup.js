@@ -1,3 +1,38 @@
+const STATUS_COPY = {
+    ready: {
+        pillClass: 'active',
+        label: 'Active',
+        title: 'Active',
+        message: 'Skip segments loaded for the current video.',
+        showRetry: false,
+        showCard: true,
+    },
+    pending: {
+        pillClass: 'pending',
+        label: 'Pending',
+        title: 'Analysis in progress',
+        message: 'Waiting for skip segments from your server...',
+        showRetry: false,
+        showCard: true,
+    },
+    failed: {
+        pillClass: 'failed',
+        label: 'Failed',
+        title: 'Analysis failed',
+        message: null,
+        showRetry: true,
+        showCard: true,
+    },
+    idle: {
+        pillClass: 'idle',
+        label: 'Inactive',
+        title: 'Not watching a video',
+        message: 'Open a YouTube watch page to analyze skip segments.',
+        showRetry: false,
+        showCard: false,
+    },
+};
+
 function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
     toast.textContent = message;
@@ -28,43 +63,32 @@ function setStatusIcon(kind) {
 }
 
 function updateAnalysisUI(state) {
+    const status = state?.status || 'idle';
+    const copy = STATUS_COPY[status] || STATUS_COPY.idle;
+
+    const pill = document.getElementById('status-pill');
+    const label = document.getElementById('status-label');
+    pill.className = 'status-pill ' + copy.pillClass;
+    label.textContent = copy.label;
+
     const section = document.getElementById('analysis-status');
     const titleEl = document.getElementById('status-title');
     const messageEl = document.getElementById('status-message');
     const retryBtn = document.getElementById('retry');
 
-    if (state.status === 'failed') {
-        section.hidden = false;
-        section.className = 'status-card failed';
-        setStatusIcon('failed');
-        titleEl.textContent = 'Analysis failed';
-        messageEl.textContent = state.error || 'Something went wrong while analyzing this video.';
-        retryBtn.hidden = false;
-        retryBtn.disabled = false;
+    if (!copy.showCard) {
+        section.hidden = true;
         return;
     }
 
-    if (state.status === 'pending') {
-        section.hidden = false;
-        section.className = 'status-card pending';
-        setStatusIcon('pending');
-        titleEl.textContent = 'Analysis in progress';
-        messageEl.textContent = 'Waiting for skip segments from your server...';
-        retryBtn.hidden = true;
-        return;
-    }
+    section.hidden = false;
+    section.className = 'status-card ' + (status === 'ready' ? 'ready' : status);
+    setStatusIcon(status === 'ready' ? 'ready' : status);
+    titleEl.textContent = copy.title;
+    messageEl.textContent = state.error || copy.message;
 
-    if (state.status === 'ready') {
-        section.hidden = false;
-        section.className = 'status-card ready';
-        setStatusIcon('ready');
-        titleEl.textContent = 'Ready to skip';
-        messageEl.textContent = 'Skip segments loaded for the current video.';
-        retryBtn.hidden = true;
-        return;
-    }
-
-    section.hidden = true;
+    retryBtn.hidden = !copy.showRetry;
+    retryBtn.disabled = !copy.showRetry;
 }
 
 function getActiveTab() {
@@ -84,12 +108,10 @@ function sendToActiveTab(message) {
 function refreshAnalysisStatus() {
     return sendToActiveTab({ type: 'get-status' })
         .then((state) => {
-            if (state && state.status !== 'idle') {
-                updateAnalysisUI(state);
-            }
+            updateAnalysisUI(state || { status: 'idle' });
         })
         .catch(() => {
-            document.getElementById('analysis-status').hidden = true;
+            updateAnalysisUI({ status: 'idle' });
         });
 }
 
