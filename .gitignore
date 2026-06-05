@@ -1,0 +1,5 @@
+.DS_Store
+*.zip
+*.crx
+*.xpi
+web-ext-artifacts/

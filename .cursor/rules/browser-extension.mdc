@@ -1,0 +1,53 @@
+---
+description: Conventions for maintaining the Skippy browser extension
+globs: plugin/**
+alwaysApply: false
+---
+
+# Skippy browser extension
+
+## Layout
+
+- `plugin/` is the loadable extension root — every file referenced in `manifest.json` must live under it.
+- Do not add build tooling or repo docs inside `plugin/` unless the extension needs them at runtime.
+
+## Cross-browser APIs
+
+Use the WebExtension pattern everywhere:
+
+```javascript
+const storage = (typeof browser !== "undefined") ? browser.storage.sync : chrome.storage.sync;
+```
+
+Prefer `browser.*` promise APIs; fall back to `chrome.*` for Chromium.
+
+## Manifest changes
+
+- Bump `version` in `manifest.json` for any user-facing release.
+- New host permissions or content-script `matches` patterns require updating `permissions` / `content_scripts` and documenting in README.
+- Content scripts only run on `https://www.youtube.com/watch*` — broaden matches deliberately (performance + review implications).
+
+## Content script (`processor.js`)
+
+- Polls storage for the server base URL; appends `/api/v2/timestamps` — never hardcode full API URLs in popup placeholder text.
+- Detects SPA navigation via History API hooks + URL polling — preserve this when refactoring video-change detection.
+- Skip check runs on a 5s interval; timestamp fetch re-triggers when the stored server URL changes.
+
+## Popup (`popup.js` / `popup.html`)
+
+- Server URL is the **base origin** only (e.g. `https://api.example.com`), saved to `storage.sync` under key `server`.
+- Register event listeners once (inside `DOMContentLoaded`).
+
+## Testing checklist
+
+1. Reload unpacked extension after any `plugin/` change.
+2. Refresh open YouTube tabs (content scripts do not hot-reload).
+3. Set server URL in popup → confirm `storage.sync` persists across browser restart.
+4. Open a watch URL → verify GET to `/api/v2/timestamps?link=...` in Network tab.
+5. With known timestamps, confirm playback jumps past `start_time`–`end_time` ranges.
+6. Navigate to another video without full page reload → confirm new timestamps are fetched.
+
+## Scope discipline
+
+- Minimal diffs; no frameworks or bundlers unless the project outgrows vanilla JS.
+- Keep console prefix `[YouTube Tracker]` consistent unless renaming project-wide.
