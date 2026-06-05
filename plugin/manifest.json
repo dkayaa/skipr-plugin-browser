@@ -1,0 +1,33 @@
+{
+    "manifest_version": 2,
+    "name": "Skippy",
+    "version": "1.0",
+    "description": "Skips Video Content on Youtube Videos",
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "id@skippy-youtube",
+            "strict_min_version": "42.0"
+        }
+    },
+    "icons": {
+        "48": "icons/icon-48.png"
+    },
+    "permissions": [
+        "https://*/*",
+        "storage"
+    ],
+    "browser_action": {
+        "default_icon": "icons/icon-48.png",
+        "default_popup": "popup.html"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://www.youtube.com/watch*"
+            ],
+            "js": [
+                "processor.js"
+            ]
+        }
+    ]
+}
