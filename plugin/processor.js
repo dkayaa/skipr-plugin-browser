@@ -81,6 +81,11 @@ function fetchTimestamps(link, generation) {
                 return;
             }
 
+            if (data.status === 'failed') {
+                console.error("[YouTube Tracker] Analysis failed:", data.error || data);
+                return;
+            }
+
             if (!response.ok) {
                 throw new Error('HTTP ' + response.status);
             }

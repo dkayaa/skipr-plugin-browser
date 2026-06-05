@@ -36,6 +36,14 @@ The extension polls the same URL every 3s until analysis finishes.
 
 Skip logic uses `start_time` and `end_time` from each interval (seconds).
 
+**Failed** — e.g. transcript unavailable:
+
+```json
+{ "status": "failed", "error": "Failed to fetch transcript for video ..." }
+```
+
+The extension logs the error and does not poll.
+
 ## Project structure
 
 ```
