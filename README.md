@@ -13,7 +13,28 @@ One codebase, one `plugin/` folder — load the same build in **Firefox** and **
    ```
 3. While the video plays, if the current time falls inside a `[start_time, end_time]` range, playback jumps to `end_time`.
 
-Expected API response: JSON array of objects with `start_time` and `end_time` (seconds).
+### API response
+
+**Pending** (analysis running) — HTTP 202:
+
+```json
+{ "status": "pending" }
+```
+
+The extension polls the same URL every 3s until analysis finishes.
+
+**Ready** (cached or complete) — HTTP 200:
+
+```json
+{
+  "status": "ready",
+  "intervals": [
+    { "id": 1, "start_time": 236, "end_time": 312, "orgs": ["David", "Eight Sleep"] }
+  ]
+}
+```
+
+Skip logic uses `start_time` and `end_time` from each interval (seconds).
 
 ## Project structure
 

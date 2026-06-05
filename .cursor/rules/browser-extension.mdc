@@ -35,7 +35,8 @@ Load `ext.js` before `processor.js` (manifest `content_scripts`) and before `pop
 - Polls storage for the server base URL; appends `/api/v2/timestamps` — never hardcode full API URLs in popup placeholder text.
 - Detects SPA navigation via History API hooks + URL polling — preserve this when refactoring video-change detection.
 - Skip check uses throttled `timeupdate` on the active `<video>` (250ms); clear listeners in `stopTracking()` before re-attaching on video change.
-- Validate API responses with `parseTimestamps()`; ignore stale fetches when `fetchLink !== video_ref`.
+- API returns `{ status: "pending" }` (HTTP 202) or `{ status: "ready", intervals: [...] }` (HTTP 200); poll every 3s while pending.
+- Validate ready responses with `parseIntervals()`; cancel polls and ignore stale fetches via `fetchGeneration` + `video_ref`.
 
 ## Popup (`popup.js` / `popup.html`)
 

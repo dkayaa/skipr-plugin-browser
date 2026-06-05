@@ -3,6 +3,7 @@ const SKIP_CHECK_MS = 250;
 const URL_POLL_MS = 500;
 const STORAGE_POLL_MS = 1000;
 const VIDEO_RETRY_MS = 1000;
+const ANALYSIS_POLL_MS = 3000;
 
 let timestamps = [];
 let api_url = '';
@@ -10,23 +11,93 @@ let video_ref = '';
 let trackedVideo = null;
 let skipHandler = null;
 let waitVideoTimeout = null;
+let pendingPollTimeout = null;
+let fetchGeneration = 0;
 
 function getVideoIdFromUrl(url) {
     const match = url.match(/[?&]v=([^&]+)/);
     return match ? match[1] : null;
 }
 
-function parseTimestamps(data) {
-    if (!Array.isArray(data)) {
-        console.warn("[YouTube Tracker] Expected array response, got:", typeof data);
+function parseIntervals(data) {
+    if (!data || data.status !== 'ready' || !Array.isArray(data.intervals)) {
+        console.warn("[YouTube Tracker] Expected ready response with intervals, got:", data);
         return [];
     }
 
-    return data.filter((entry) => {
+    return data.intervals.filter((entry) => {
         return typeof entry.start_time === 'number'
             && typeof entry.end_time === 'number'
             && entry.start_time < entry.end_time;
     });
+}
+
+function cancelPendingPoll() {
+    if (pendingPollTimeout) {
+        clearTimeout(pendingPollTimeout);
+        pendingPollTimeout = null;
+    }
+}
+
+function isStaleFetch(link, generation) {
+    return link !== video_ref || generation !== fetchGeneration;
+}
+
+function buildTimestampsUrl(link) {
+    const params = new URLSearchParams();
+    params.append('link', link);
+    return api_url + api_path + '?' + params.toString();
+}
+
+function schedulePendingPoll(link, generation) {
+    cancelPendingPoll();
+    pendingPollTimeout = setTimeout(() => {
+        fetchTimestamps(link, generation);
+    }, ANALYSIS_POLL_MS);
+}
+
+function fetchTimestamps(link, generation) {
+    const url = buildTimestampsUrl(link);
+    console.log("[YouTube Tracker] Sending GET request to:", url);
+
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+    })
+        .then((response) => {
+            return response.json().then((data) => ({ response, data }));
+        })
+        .then(({ response, data }) => {
+            if (isStaleFetch(link, generation)) {
+                console.log("[YouTube Tracker] Ignoring stale response for:", link);
+                return;
+            }
+
+            if (response.status === 202 || data.status === 'pending') {
+                console.log("[YouTube Tracker] Analysis pending, polling again in", ANALYSIS_POLL_MS, "ms");
+                schedulePendingPoll(link, generation);
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error('HTTP ' + response.status);
+            }
+
+            if (data.status === 'ready') {
+                timestamps = parseIntervals(data);
+                console.log('[YouTube Tracker] Loaded', timestamps.length, 'skip segment(s)');
+                return;
+            }
+
+            console.warn("[YouTube Tracker] Unexpected response:", response.status, data);
+        })
+        .catch((error) => {
+            if (!isStaleFetch(link, generation)) {
+                console.error("[YouTube Tracker] GET request error:", error);
+            }
+        });
 }
 
 function stopTracking() {
@@ -71,41 +142,16 @@ function trackVideo(video) {
 }
 
 function getServer(link) {
+    cancelPendingPoll();
+    fetchGeneration += 1;
+
     if (!link || !api_url) {
         timestamps = [];
         return;
     }
 
     timestamps = [];
-    const fetchLink = link;
-    const params = new URLSearchParams();
-    params.append('link', link);
-
-    console.log("[YouTube Tracker] Sending GET request to:", api_url + api_path);
-
-    fetch(api_url + api_path + '?' + params.toString(), {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-    })
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error('HTTP ' + response.status);
-            }
-            return response.json();
-        })
-        .then((data) => {
-            if (fetchLink !== video_ref) {
-                console.log("[YouTube Tracker] Ignoring stale response for:", fetchLink);
-                return;
-            }
-            timestamps = parseTimestamps(data);
-            console.log('[YouTube Tracker] Loaded', timestamps.length, 'skip segment(s)');
-        })
-        .catch((error) => {
-            console.error("[YouTube Tracker] GET request error:", error);
-        });
+    fetchTimestamps(link, fetchGeneration);
 }
 
 function waitForVideo() {
