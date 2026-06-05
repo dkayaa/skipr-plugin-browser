@@ -31,7 +31,8 @@ Prefer `browser.*` promise APIs; fall back to `chrome.*` for Chromium.
 
 - Polls storage for the server base URL; appends `/api/v2/timestamps` — never hardcode full API URLs in popup placeholder text.
 - Detects SPA navigation via History API hooks + URL polling — preserve this when refactoring video-change detection.
-- Skip check runs on a 5s interval; timestamp fetch re-triggers when the stored server URL changes.
+- Skip check uses throttled `timeupdate` on the active `<video>` (250ms); clear listeners in `stopTracking()` before re-attaching on video change.
+- Validate API responses with `parseTimestamps()`; ignore stale fetches when `fetchLink !== video_ref`.
 
 ## Popup (`popup.js` / `popup.html`)
 
