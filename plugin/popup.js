@@ -13,7 +13,7 @@ function updateAnalysisUI(state) {
 
     if (state.status === 'pending') {
         section.hidden = false;
-        errorEl.textContent = 'Analysis in progress…';
+        errorEl.textContent = 'Analysis in progress...';
         errorEl.className = 'pending';
         retryBtn.disabled = true;
         return;
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('save').addEventListener('click', () => {
-        const server = serverInput.value;
+        const server = serverInput.value.trim().replace(/\/+$/, '');
         storage.set({ server }).then(() => {
             console.log("[YouTube Tracker] URL saved:", server);
             statusDiv.textContent = 'Saved!';

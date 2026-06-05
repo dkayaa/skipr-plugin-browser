@@ -15,6 +15,13 @@ let pendingPollTimeout = null;
 let fetchGeneration = 0;
 let analysisState = { status: 'idle', error: null, link: null };
 
+function normalizeApiUrl(url) {
+    if (!url) {
+        return '';
+    }
+    return url.trim().replace(/\/+$/, '');
+}
+
 function getVideoIdFromUrl(url) {
     const match = url.match(/[?&]v=([^&]+)/);
     return match ? match[1] : null;
@@ -171,6 +178,9 @@ function getServer(link, { retry = false } = {}) {
     if (!link || !api_url) {
         timestamps = [];
         setAnalysisState('idle');
+        if (link && !api_url) {
+            console.warn("[YouTube Tracker] No server URL configured — open Skippy popup and save your API base URL (e.g. http://localhost:8090)");
+        }
         return;
     }
 
@@ -209,9 +219,9 @@ function waitForVideo() {
 }
 
 function loadServerUrl() {
-    getStorage().get('server')
+    return getStorage().get('server')
         .then((result) => {
-            const next = result.server || '';
+            const next = normalizeApiUrl(result.server || '');
             if (next === api_url) {
                 return;
             }
@@ -225,6 +235,16 @@ function loadServerUrl() {
         .catch((error) => {
             console.error("[YouTube Tracker] Storage read error:", error);
         });
+}
+
+function init() {
+    loadServerUrl().then(() => {
+        if (currentVideoId) {
+            waitForVideo();
+        }
+    });
+
+    setInterval(loadServerUrl, STORAGE_POLL_MS);
 }
 
 let currentVideoId = getVideoIdFromUrl(location.href);
@@ -276,9 +296,4 @@ window.addEventListener("popstate", () => {
 
 setInterval(handleUrlChange, URL_POLL_MS);
 
-loadServerUrl();
-setInterval(loadServerUrl, STORAGE_POLL_MS);
-
-if (currentVideoId) {
-    waitForVideo();
-}
+init();
