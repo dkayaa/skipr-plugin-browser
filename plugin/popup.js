@@ -1,21 +1,66 @@
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast ' + type;
+    toast.hidden = false;
+
+    clearTimeout(showToast._timer);
+    showToast._timer = setTimeout(() => {
+        toast.hidden = true;
+    }, 2500);
+}
+
+function setStatusIcon(kind) {
+    const icon = document.getElementById('status-icon');
+    if (kind === 'pending') {
+        icon.innerHTML = '<div class="spinner"></div>';
+        return;
+    }
+    if (kind === 'failed') {
+        icon.textContent = '!';
+        return;
+    }
+    if (kind === 'ready') {
+        icon.textContent = '\u2713';
+        return;
+    }
+    icon.textContent = '';
+}
+
 function updateAnalysisUI(state) {
     const section = document.getElementById('analysis-status');
-    const errorEl = document.getElementById('analysis-error');
+    const titleEl = document.getElementById('status-title');
+    const messageEl = document.getElementById('status-message');
     const retryBtn = document.getElementById('retry');
 
     if (state.status === 'failed') {
         section.hidden = false;
-        errorEl.textContent = state.error || 'Analysis failed';
-        errorEl.className = '';
+        section.className = 'status-card failed';
+        setStatusIcon('failed');
+        titleEl.textContent = 'Analysis failed';
+        messageEl.textContent = state.error || 'Something went wrong while analyzing this video.';
+        retryBtn.hidden = false;
         retryBtn.disabled = false;
         return;
     }
 
     if (state.status === 'pending') {
         section.hidden = false;
-        errorEl.textContent = 'Analysis in progress...';
-        errorEl.className = 'pending';
-        retryBtn.disabled = true;
+        section.className = 'status-card pending';
+        setStatusIcon('pending');
+        titleEl.textContent = 'Analysis in progress';
+        messageEl.textContent = 'Waiting for skip segments from your server...';
+        retryBtn.hidden = true;
+        return;
+    }
+
+    if (state.status === 'ready') {
+        section.hidden = false;
+        section.className = 'status-card ready';
+        setStatusIcon('ready');
+        titleEl.textContent = 'Ready to skip';
+        messageEl.textContent = 'Skip segments loaded for the current video.';
+        retryBtn.hidden = true;
         return;
     }
 
@@ -39,7 +84,7 @@ function sendToActiveTab(message) {
 function refreshAnalysisStatus() {
     return sendToActiveTab({ type: 'get-status' })
         .then((state) => {
-            if (state) {
+            if (state && state.status !== 'idle') {
                 updateAnalysisUI(state);
             }
         })
@@ -49,10 +94,7 @@ function refreshAnalysisStatus() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("[YouTube Tracker] Popup loaded.");
-
     const serverInput = document.getElementById('server');
-    const statusDiv = document.getElementById('status');
     const storage = getStorage();
 
     storage.get('server').then((result) => {
@@ -64,23 +106,28 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('save').addEventListener('click', () => {
         const server = serverInput.value.trim().replace(/\/+$/, '');
         storage.set({ server }).then(() => {
-            console.log("[YouTube Tracker] URL saved:", server);
-            statusDiv.textContent = 'Saved!';
-            setTimeout(() => statusDiv.textContent = '', 1500);
+            serverInput.value = server;
+            showToast('Server URL saved', 'success');
         });
+    });
+
+    serverInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            document.getElementById('save').click();
+        }
     });
 
     document.getElementById('retry').addEventListener('click', () => {
         sendToActiveTab({ type: 'retry-analysis' })
             .then((response) => {
                 if (!response?.ok) {
-                    statusDiv.textContent = response?.error || 'Could not retry';
+                    showToast(response?.error || 'Could not retry', 'error');
                     return;
                 }
                 updateAnalysisUI({ status: 'pending', error: null });
             })
             .catch(() => {
-                statusDiv.textContent = 'Open a YouTube watch page first.';
+                showToast('Open a YouTube watch page first', 'error');
             });
     });
 
