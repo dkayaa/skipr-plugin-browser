@@ -2,7 +2,7 @@
 
 A browser extension that auto-skips segments of YouTube videos based on timestamps from a backend server.
 
-Supports Firefox (primary) and Chrome-compatible browsers via the WebExtension APIs.
+One codebase, one `plugin/` folder — load the same build in **Firefox** and **Chrome** (Manifest V3).
 
 ## How it works
 
@@ -19,8 +19,9 @@ Expected API response: JSON array of objects with `start_time` and `end_time` (s
 
 ```
 skippy-plugin/
-├── plugin/                 # Load this folder as an unpacked extension
-│   ├── manifest.json       # Extension manifest (MV2)
+├── plugin/                 # Load this folder as an unpacked extension (Firefox + Chrome)
+│   ├── manifest.json       # Manifest V3
+│   ├── ext.js              # Cross-browser API shim (browser / chrome)
 │   ├── processor.js        # Content script — fetch timestamps, skip segments
 │   ├── popup.html          # Settings UI
 │   ├── popup.js            # Save/load server URL to storage
@@ -29,13 +30,13 @@ skippy-plugin/
 └── README.md
 ```
 
-The `plugin/` directory is the extension root. Keeping source in a subfolder leaves room at the repo root for docs, tooling, or CI without mixing them into the loadable extension bundle.
+The `plugin/` directory is the extension root. No separate Chrome repo or build step — both browsers load the same files.
 
 ## Development setup
 
 ### Prerequisites
 
-- Firefox and/or Chrome
+- Firefox 109+ and/or Chrome (current)
 - A running Skippy backend that exposes `GET /api/v2/timestamps`
 
 ### Load unpacked (Firefox)
@@ -55,24 +56,31 @@ The `plugin/` directory is the extension root. Keeping source in a subfolder lea
 3. Click **Save**
 4. Open a YouTube video and check the browser console for `[YouTube Tracker]` logs
 
+### Cross-browser dev workflow
+
+After any change:
+
+1. Reload the extension in **both** browsers' extension managers
+2. Refresh open YouTube tabs (content scripts do not hot-reload)
+
 ## Making changes
 
 | Change type | Files to edit |
 |-------------|---------------|
 | Skip logic, API calls, URL detection | `plugin/processor.js` |
 | Settings UI | `plugin/popup.html`, `plugin/popup.js` |
+| Cross-browser extension APIs | `plugin/ext.js` |
 | Permissions, content script matches, icons | `plugin/manifest.json` |
-
-After editing, reload the extension in the browser's extension manager and refresh any open YouTube tabs.
 
 ## Permissions
 
-- `https://*/*` — fetch timestamps from the configured server
-- `storage` — persist the server URL via `browser.storage.sync` / `chrome.storage.sync`
+- `host_permissions: https://*/*` — fetch timestamps from the configured server
+- `storage` — persist the server URL via `storage.sync`
 
 ## Notes
 
-- **Manifest V2** — works in Firefox; Chrome is deprecating MV2, so a future MV3 migration may be needed.
+- **Manifest V3** — supported by Firefox 109+ and Chrome; no background service worker required for this extension.
+- **Firefox add-on ID** — set in `browser_specific_settings.gecko`; Chrome ignores this field.
 - **Icons** — a placeholder `plugin/icons/icon-48.png` is included; replace before publishing.
 - **Logging prefix** — console messages use `[YouTube Tracker]` (legacy name in code).
 

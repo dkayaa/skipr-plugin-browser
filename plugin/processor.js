@@ -11,10 +11,6 @@ let trackedVideo = null;
 let skipHandler = null;
 let waitVideoTimeout = null;
 
-function getStorage() {
-    return (typeof browser !== "undefined") ? browser.storage.sync : chrome.storage.sync;
-}
-
 function getVideoIdFromUrl(url) {
     const match = url.match(/[?&]v=([^&]+)/);
     return match ? match[1] : null;

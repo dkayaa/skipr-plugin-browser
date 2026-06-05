@@ -8,24 +8,27 @@ alwaysApply: false
 
 ## Layout
 
-- `plugin/` is the loadable extension root — every file referenced in `manifest.json` must live under it.
+- `plugin/` is the single loadable extension root for **Firefox and Chrome** — no per-browser forks.
+- `ext.js` is the only place for `browser` / `chrome` branching; other files call `getStorage()`.
 - Do not add build tooling or repo docs inside `plugin/` unless the extension needs them at runtime.
 
 ## Cross-browser APIs
 
-Use the WebExtension pattern everywhere:
-
 ```javascript
-const storage = (typeof browser !== "undefined") ? browser.storage.sync : chrome.storage.sync;
+// ext.js — do not duplicate this pattern elsewhere
+const ext = typeof globalThis.browser !== "undefined" ? globalThis.browser : globalThis.chrome;
 ```
 
-Prefer `browser.*` promise APIs; fall back to `chrome.*` for Chromium.
+Load `ext.js` before `processor.js` (manifest `content_scripts`) and before `popup.js` (popup.html).
 
-## Manifest changes
+## Manifest (MV3)
 
-- Bump `version` in `manifest.json` for any user-facing release.
-- New host permissions or content-script `matches` patterns require updating `permissions` / `content_scripts` and documenting in README.
-- Content scripts only run on `https://www.youtube.com/watch*` — broaden matches deliberately (performance + review implications).
+- `manifest_version: 3`; toolbar UI uses `action`, not `browser_action`.
+- API fetch permission lives in `host_permissions`; `storage` stays in `permissions`.
+- Bump `version` for any user-facing release.
+- `browser_specific_settings.gecko` is Firefox-only (add-on ID); Chrome ignores it.
+- No background service worker unless new features require one.
+- Content scripts only run on `https://www.youtube.com/watch*` — broaden matches deliberately.
 
 ## Content script (`processor.js`)
 
@@ -41,7 +44,7 @@ Prefer `browser.*` promise APIs; fall back to `chrome.*` for Chromium.
 
 ## Testing checklist
 
-1. Reload unpacked extension after any `plugin/` change.
+1. Reload unpacked extension in **Firefox and Chrome** after any `plugin/` change.
 2. Refresh open YouTube tabs (content scripts do not hot-reload).
 3. Set server URL in popup → confirm `storage.sync` persists across browser restart.
 4. Open a watch URL → verify GET to `/api/v2/timestamps?link=...` in Network tab.

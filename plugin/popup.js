@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const serverInput = document.getElementById('server');
     const statusDiv = document.getElementById('status');
-    const storage = (typeof browser !== "undefined") ? browser.storage.sync : chrome.storage.sync;
+    const storage = getStorage();
 
     storage.get('server').then((result) => {
         if (result.server) {

@@ -1,24 +1,29 @@
 {
-    "manifest_version": 2,
+    "manifest_version": 3,
     "name": "Skippy",
-    "version": "1.1",
+    "version": "1.2",
     "description": "Skips Video Content on Youtube Videos",
     "browser_specific_settings": {
         "gecko": {
             "id": "id@skippy-youtube",
-            "strict_min_version": "42.0"
+            "strict_min_version": "109.0"
         }
     },
     "icons": {
         "48": "icons/icon-48.png"
     },
     "permissions": [
-        "https://*/*",
         "storage"
     ],
-    "browser_action": {
-        "default_icon": "icons/icon-48.png",
-        "default_popup": "popup.html"
+    "host_permissions": [
+        "https://*/*"
+    ],
+    "action": {
+        "default_icon": {
+            "48": "icons/icon-48.png"
+        },
+        "default_popup": "popup.html",
+        "default_title": "Skippy"
     },
     "content_scripts": [
         {
@@ -26,6 +31,7 @@
                 "https://www.youtube.com/watch*"
             ],
             "js": [
+                "ext.js",
                 "processor.js"
             ]
         }
