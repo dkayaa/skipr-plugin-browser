@@ -16,13 +16,13 @@ function updateBadge(status) {
 
     if (!meta.color) {
         ext.action.setBadgeText({ text: '' });
-        ext.action.setTitle({ title: 'Skippy' });
+        ext.action.setTitle({ title: 'Skipr' });
         return;
     }
 
     ext.action.setBadgeBackgroundColor({ color: meta.color });
     ext.action.setBadgeText({ text: ' ' });
-    ext.action.setTitle({ title: 'Skippy — ' + meta.label });
+    ext.action.setTitle({ title: 'Skipr — ' + meta.label });
 }
 
 function applyBadge() {

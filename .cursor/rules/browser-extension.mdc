@@ -1,17 +1,17 @@
 ---
-description: Conventions for maintaining the Skippy browser extension
-globs: plugin/**
+description: Conventions for maintaining the Skipr browser extension
+globs: skipr-plugin/**
 alwaysApply: false
 ---
 
-# Skippy browser extension
+# Skipr browser extension
 
 ## Layout
 
-- `plugin/` is the single loadable extension root for **Firefox and Chrome** — no per-browser forks.
+- `skipr-plugin/` is the single loadable extension root for **Firefox and Chrome** — no per-browser forks.
 - `ext.js` is the only place for `browser` / `chrome` branching; other files call `getStorage()`.
 - `config.js` holds `DEFAULT_API_BASE` and `resolveApiUrl()` — load after `ext.js` in manifest and popup.
-- Do not add build tooling or repo docs inside `plugin/` unless the extension needs them at runtime.
+- Do not add build tooling or repo docs inside `skipr-plugin/` unless the extension needs them at runtime.
 
 ## Cross-browser APIs
 
@@ -50,7 +50,7 @@ Load `ext.js` before `processor.js` (manifest `content_scripts`) and before `pop
 
 ## Testing checklist
 
-1. Reload unpacked extension in **Firefox and Chrome** after any `plugin/` change.
+1. Reload unpacked extension in **Firefox and Chrome** after any `skipr-plugin/` change.
 2. Refresh open YouTube tabs (content scripts do not hot-reload).
 3. Set server URL in popup → confirm `storage.sync` persists across browser restart.
 4. Open a watch URL → verify GET to `/api/v2/timestamps?link=...` in Network tab.
@@ -60,4 +60,4 @@ Load `ext.js` before `processor.js` (manifest `content_scripts`) and before `pop
 ## Scope discipline
 
 - Minimal diffs; no frameworks or bundlers unless the project outgrows vanilla JS.
-- Keep console prefix `[YouTube Tracker]` consistent unless renaming project-wide.
+- Keep console prefix `[Skipr]` consistent unless renaming project-wide.

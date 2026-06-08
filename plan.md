@@ -1,4 +1,4 @@
-# Skippy production readiness plan
+# Skipr production readiness plan
 
 Roadmap for taking the browser extension (and its backend) from dev-ready to production-ready.
 
@@ -6,8 +6,8 @@ Roadmap for taking the browser extension (and its backend) from dev-ready to pro
 
 | Repo | Role |
 |------|------|
-| `skippy-plugin` | Firefox/Chrome extension (`plugin/`) |
-| `skippy-youtube-api` | Flask API, ML pipeline, database |
+| `skipr-plugin` | Firefox/Chrome extension (`skipr-plugin/`) |
+| `skipr-youtube-api` | Flask API, ML pipeline, database |
 
 **Current baseline** — Core loop works: configure server URL → fetch intervals on `/watch` pages → poll while pending → auto-skip → popup badge + toasts. Good for personal/dev use; gaps are reliability, coverage, trust, and ops.
 
@@ -22,26 +22,26 @@ These block a credible public v1. Complete before store submission or inviting n
 - [ ] **Surface network and HTTP errors in the UI**
   - Unreachable server, timeout, invalid URL, unexpected 4xx/5xx → popup shows **Failed** with a clear message (not only `console.error`)
   - Audit silent `.catch(() => {})` paths in `processor.js` and `popup.js`
-  - Files: `plugin/processor.js`, `plugin/popup.js`, `plugin/popup.html`
+  - Files: `skipr-plugin/processor.js`, `skipr-plugin/popup.js`, `skipr-plugin/popup.html`
 
 - [ ] **Validate server URL on save**
   - Reject empty/malformed URLs before writing to `storage.sync`
   - Normalize trailing slashes (already partially done)
-  - Files: `plugin/popup.js`
+  - Files: `skipr-plugin/popup.js`
 
 - [ ] **Add “Test connection” in popup**
   - Hit `{server}/api/test` (or a dedicated `/health`) on save or via a button
   - Show success/failure toast before user opens a video
-  - Files: `plugin/popup.js`, `plugin/popup.html`
+  - Files: `skipr-plugin/popup.js`, `skipr-plugin/popup.html`
 
 - [ ] **Replace settings polling with `storage.onChanged`**
   - Remove 1s `setInterval(loadSettings)` in `processor.js`
-  - Files: `plugin/processor.js`
+  - Files: `skipr-plugin/processor.js`
 
 - [ ] **Narrow `host_permissions`**
   - If hosting a single API: restrict to that origin + `http://localhost:*/*` for dev
   - Document how self-hosters add their origin (or use optional permissions)
-  - Files: `plugin/manifest.json`, `README.md`
+  - Files: `skipr-plugin/manifest.json`, `README.md`
 
 - [ ] **Privacy policy and data disclosure**
   - Extension sends full YouTube watch URLs to the configured server
@@ -56,7 +56,7 @@ These block a credible public v1. Complete before store submission or inviting n
 - [ ] **License**
   - Choose and document OSS or proprietary license in `README.md` and repo
 
-### Backend (`skippy-youtube-api`)
+### Backend (`skipr-youtube-api`)
 
 - [ ] **Hosted HTTPS API** (or explicit “bring your own server” positioning with setup guide)
 - [ ] **Production runtime** — Gunicorn (or similar) behind reverse proxy with TLS; not `flask run`
@@ -74,7 +74,7 @@ These block a credible public v1. Complete before store submission or inviting n
 - [ ] **YouTube Shorts support**
   - Add content script matches for `https://www.youtube.com/shorts/*`
   - Verify skip logic works with Shorts player layout
-  - Files: `plugin/manifest.json`, `plugin/processor.js`, possibly `notifications.js`
+  - Files: `skipr-plugin/manifest.json`, `skipr-plugin/processor.js`, possibly `notifications.js`
 
 - [ ] **Broader URL coverage** (as needed)
   - Embeds: `https://www.youtube.com/embed/*`
@@ -83,21 +83,21 @@ These block a credible public v1. Complete before store submission or inviting n
 - [ ] **Defensive player detection**
   - Fallback selectors if primary `<video>` or `.html5-video-player` missing
   - Optional MutationObserver for late-mounted players
-  - Files: `plugin/processor.js`, `plugin/notifications.js`
+  - Files: `skipr-plugin/processor.js`, `skipr-plugin/notifications.js`
 
 - [ ] **Cancel in-flight fetches on navigation**
   - Confirm `fetchGeneration` + `AbortController` on video/tab change
-  - Files: `plugin/processor.js`
+  - Files: `skipr-plugin/processor.js`
 
 - [ ] **First-run onboarding**
   - Default hosted API URL (if applicable) or clear empty state
   - Short “1. Set server → 2. Open a video → 3. Done” copy in popup
   - Link to docs and privacy policy
-  - Files: `plugin/popup.html`, `plugin/popup.js`
+  - Files: `skipr-plugin/popup.html`, `skipr-plugin/popup.js`
 
 - [ ] **Update README**
   - Document `background.js`, `notifications.js`, badge states, notify levels, pause toggle
-  - Cross-link `skippy-youtube-api` setup
+  - Cross-link `skipr-youtube-api` setup
   - Files: `README.md`
 
 ### Backend
@@ -116,18 +116,18 @@ These block a credible public v1. Complete before store submission or inviting n
 - [ ] **Segment list in popup**
   - Show detected intervals: time range + `orgs` when available
   - Helps users verify skips before/during playback
-  - Files: `plugin/popup.html`, `plugin/popup.js` (may need content script to pass intervals)
+  - Files: `skipr-plugin/popup.html`, `skipr-plugin/popup.js` (may need content script to pass intervals)
 
 - [ ] **Per-video override**
   - “Don’t skip this video” — local allowlist/denylist in `storage.local`
-  - Files: `plugin/processor.js`, `plugin/popup.js`
+  - Files: `skipr-plugin/processor.js`, `skipr-plugin/popup.js`
 
 - [ ] **Per-channel override** (optional)
   - Skip or never-skip for channel ID extracted from page or API
 
 - [ ] **Manual seek-back after skip**
   - Toast action: “Undo skip” → seek to `start_time` of last skipped segment
-  - Files: `plugin/notifications.js`, `plugin/processor.js`
+  - Files: `skipr-plugin/notifications.js`, `skipr-plugin/processor.js`
 
 - [ ] **Wrong-skip feedback** (optional)
   - “Report incorrect segment” → POST to backend for review/retraining
@@ -173,7 +173,7 @@ These block a credible public v1. Complete before store submission or inviting n
 
 ### Both
 
-- [ ] **Align console prefix** — `[YouTube Tracker]` vs `[Youtube Tracker]` typo in `processor.js`
+- [ ] **Align console prefix** — use `[Skipr]` consistently in `processor.js`
 - [ ] **Bump `manifest.json` version** for each user-facing release
 
 ---
@@ -182,7 +182,7 @@ These block a credible public v1. Complete before store submission or inviting n
 
 ### Store submission
 
-- [ ] **Firefox AMO** — `browser_specific_settings.gecko.id` set (`id@skippy-youtube`); review data collection disclosure
+- [ ] **Firefox AMO** — `browser_specific_settings.gecko.id` set (`id@skipr-youtube`); review data collection disclosure
 - [ ] **Chrome Web Store** — one-time developer fee; MV3 compliance
 - [ ] **Listing copy** — features, limitations (watch pages only until Shorts done), self-host vs hosted API
 - [ ] **Support channel** — GitHub issues, email, or Discord
@@ -223,7 +223,7 @@ flowchart LR
 
 ## Out of scope (unless product direction changes)
 
-- Build tooling / bundlers in `plugin/` (stay vanilla JS per project rules)
+- Build tooling / bundlers in `skipr-plugin/` (stay vanilla JS per project rules)
 - YouTube mobile app
 - Per-user accounts in extension (unless backend adds multi-tenancy)
 - Offline / cached intervals without server round-trip
@@ -234,4 +234,4 @@ flowchart LR
 
 - Extension API contract: `README.md` (pending / ready / failed, `retry=1`)
 - Agent conventions: `.cursor/rules/browser-extension.mdc`
-- Backend architecture: `skippy-youtube-api` `.cursor/rules/agents.mdc`
+- Backend architecture: `skipr-youtube-api` `.cursor/rules/agents.mdc`

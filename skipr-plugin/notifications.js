@@ -12,7 +12,7 @@ function ensureSkipToastStyles() {
 
     skipToastStyleEl = document.createElement('style');
     skipToastStyleEl.textContent = `
-        .skippy-skip-toast {
+        .skipr-skip-toast {
             position: absolute;
             left: 12px;
             bottom: 52px;
@@ -31,13 +31,13 @@ function ensureSkipToastStyles() {
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
         }
 
-        .skippy-skip-toast.visible {
+        .skipr-skip-toast.visible {
             opacity: 1;
             transform: translateY(0);
         }
 
         @media (prefers-reduced-motion: reduce) {
-            .skippy-skip-toast {
+            .skipr-skip-toast {
                 transition: none;
             }
         }
@@ -103,7 +103,7 @@ function showSkipNotification(segment, level, video) {
     hideSkipToast();
 
     skipToastEl = document.createElement('div');
-    skipToastEl.className = 'skippy-skip-toast';
+    skipToastEl.className = 'skipr-skip-toast';
     skipToastEl.setAttribute('role', 'status');
     skipToastEl.setAttribute('aria-live', 'polite');
     skipToastEl.textContent = formatSkipMessage(segment, level);

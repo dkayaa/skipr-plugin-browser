@@ -26,7 +26,7 @@ function getVideoIdFromUrl(url) {
 
 function parseIntervals(data) {
     if (!data || data.status !== 'ready' || !Array.isArray(data.intervals)) {
-        console.warn("[YouTube Tracker] Expected ready response with intervals, got:", data);
+        console.warn("[Skipr] Expected ready response with intervals, got:", data);
         return [];
     }
 
@@ -80,7 +80,7 @@ function schedulePendingPoll(link, generation) {
 
 function fetchTimestamps(link, generation, { retry = false } = {}) {
     const url = buildTimestampsUrl(link, { retry });
-    console.log("[YouTube Tracker] Sending GET request to:", url);
+    console.log("[Skipr] Sending GET request to:", url);
 
     fetch(url, {
         method: 'GET',
@@ -93,13 +93,13 @@ function fetchTimestamps(link, generation, { retry = false } = {}) {
         })
         .then(({ response, data }) => {
             if (isStaleFetch(link, generation)) {
-                console.log("[YouTube Tracker] Ignoring stale response for:", link);
+                console.log("[Skipr] Ignoring stale response for:", link);
                 return;
             }
 
             if (response.status === 202 || data.status === 'pending') {
                 setAnalysisState('pending');
-                console.log("[YouTube Tracker] Analysis pending, polling again in", ANALYSIS_POLL_MS, "ms");
+                console.log("[Skipr] Analysis pending, polling again in", ANALYSIS_POLL_MS, "ms");
                 schedulePendingPoll(link, generation);
                 return;
             }
@@ -107,7 +107,7 @@ function fetchTimestamps(link, generation, { retry = false } = {}) {
             if (data.status === 'failed') {
                 const error = data.error || 'Analysis failed';
                 setAnalysisState('failed', error);
-                console.error("[YouTube Tracker] Analysis failed:", error);
+                console.error("[Skipr] Analysis failed:", error);
                 return;
             }
 
@@ -118,15 +118,15 @@ function fetchTimestamps(link, generation, { retry = false } = {}) {
             if (data.status === 'ready') {
                 timestamps = parseIntervals(data);
                 setAnalysisState('ready');
-                console.log('[YouTube Tracker] Loaded', timestamps.length, 'skip segment(s)');
+                console.log('[Skipr] Loaded', timestamps.length, 'skip segment(s)');
                 return;
             }
 
-            console.warn("[YouTube Tracker] Unexpected response:", response.status, data);
+            console.warn("[Skipr] Unexpected response:", response.status, data);
         })
         .catch((error) => {
             if (!isStaleFetch(link, generation)) {
-                console.error("[YouTube Tracker] GET request error:", error);
+                console.error("[Skipr] GET request error:", error);
             }
         });
 }
@@ -156,7 +156,7 @@ function checkAndSkip(video) {
         const segment = timestamps[i];
         const { start_time, end_time } = segment;
         if (start_time <= curTime && curTime < end_time) {
-            console.log("[YouTube Tracker] Skipping segment", start_time, "–", end_time);
+            console.log("[Skipr] Skipping segment", start_time, "–", end_time);
             video.currentTime = end_time;
             showSkipNotification(segment, notifyLevel, video);
             return;
@@ -216,7 +216,7 @@ function waitForVideo() {
     if (video) {
         video_ref = window.location.href;
 
-        console.log("[YouTube Tracker] Video found:", video_ref);
+        console.log("[Skipr] Video found:", video_ref);
 
         getServer(video_ref);
         trackVideo(video);
@@ -240,15 +240,15 @@ function loadSettings() {
             skippingEnabled = nextSkipping;
 
             if (urlChanged) {
-                console.log("[YouTube Tracker] API URL updated:", api_url || '(not set)');
+                console.log("[Skipr] API URL updated:", api_url || '(not set)');
             }
 
             if (notifyChanged) {
-                console.log("[YouTube Tracker] Notification level:", notifyLevel);
+                console.log("[Skipr] Notification level:", notifyLevel);
             }
 
             if (skippingChanged) {
-                console.log("[YouTube Tracker] Interval skipping:", skippingEnabled ? 'enabled' : 'disabled');
+                console.log("[Skipr] Interval skipping:", skippingEnabled ? 'enabled' : 'disabled');
                 syncSkippingState();
             }
 
@@ -257,7 +257,7 @@ function loadSettings() {
             }
         })
         .catch((error) => {
-            console.error("[YouTube Tracker] Storage read error:", error);
+            console.error("[Skipr] Storage read error:", error);
         });
 }
 
@@ -275,7 +275,7 @@ function init() {
 let currentVideoId = getVideoIdFromUrl(location.href);
 
 function onNewVideo(videoId) {
-    console.log("[Youtube Tracker] New video loaded:", videoId);
+    console.log("[Skipr] New video loaded:", videoId);
     stopTracking();
     hideSkipToast();
     timestamps = [];

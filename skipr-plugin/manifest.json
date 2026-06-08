@@ -1,11 +1,11 @@
 {
     "manifest_version": 3,
-    "name": "Skippy",
+    "name": "Skipr",
     "version": "1.7",
     "description": "Skips Video Content on Youtube Videos",
     "browser_specific_settings": {
         "gecko": {
-            "id": "id@skippy-youtube",
+            "id": "id@skipr-youtube",
             "strict_min_version": "109.0"
         }
     },
@@ -33,7 +33,7 @@
             "48": "icons/icon-48.png"
         },
         "default_popup": "popup.html",
-        "default_title": "Skippy"
+        "default_title": "Skipr"
     },
     "content_scripts": [
         {
