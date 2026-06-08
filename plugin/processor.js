@@ -19,13 +19,6 @@ let skippingEnabled = true;
 
 const NOTIFY_LEVELS = new Set(['off', 'minimal', 'detailed']);
 
-function normalizeApiUrl(url) {
-    if (!url) {
-        return '';
-    }
-    return url.trim().replace(/\/+$/, '');
-}
-
 function getVideoIdFromUrl(url) {
     const match = url.match(/[?&]v=([^&]+)/);
     return match ? match[1] : null;
@@ -192,12 +185,9 @@ function getServer(link, { retry = false } = {}) {
     cancelPendingPoll();
     fetchGeneration += 1;
 
-    if (!link || !api_url) {
+    if (!link) {
         timestamps = [];
         setAnalysisState('idle');
-        if (link && !api_url) {
-            console.warn("[YouTube Tracker] No server URL configured — open Skippy popup and save your API base URL (e.g. http://localhost:8090)");
-        }
         return;
     }
 
@@ -238,7 +228,7 @@ function waitForVideo() {
 function loadSettings() {
     return getStorage().get(['server', 'notifyLevel', 'skippingEnabled'])
         .then((result) => {
-            const nextUrl = normalizeApiUrl(result.server || '');
+            const nextUrl = resolveApiUrl(result.server);
             const nextNotify = NOTIFY_LEVELS.has(result.notifyLevel) ? result.notifyLevel : 'minimal';
             const nextSkipping = result.skippingEnabled !== false;
             const urlChanged = nextUrl !== api_url;

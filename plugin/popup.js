@@ -128,6 +128,19 @@ function refreshAnalysisStatus(skippingEnabled = true) {
         });
 }
 
+function saveServerOverride(storage, serverInput, skippingEnabled) {
+    const override = normalizeApiUrl(serverInput.value);
+    const update = override
+        ? storage.set({ server: override })
+        : storage.remove('server');
+
+    return update.then(() => {
+        serverInput.value = override;
+        showToast(override ? 'Custom server saved' : 'Using default server', 'success');
+        refreshAnalysisStatus(skippingEnabled);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const serverInput = document.getElementById('server');
     const notifySelect = document.getElementById('notify-level');
@@ -135,10 +148,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const storage = getStorage();
     let skippingEnabled = true;
 
+    document.getElementById('default-server-label').textContent = DEFAULT_API_BASE;
+    serverInput.placeholder = DEFAULT_API_BASE;
+
     storage.get(['server', 'notifyLevel', 'skippingEnabled']).then((result) => {
-        if (result.server) {
-            serverInput.value = result.server;
-        }
+        serverInput.value = normalizeApiUrl(result.server || '');
         if (result.notifyLevel) {
             notifySelect.value = result.notifyLevel;
         }
@@ -147,18 +161,13 @@ document.addEventListener('DOMContentLoaded', () => {
         refreshAnalysisStatus(skippingEnabled);
     });
 
-    document.getElementById('save').addEventListener('click', () => {
-        const server = serverInput.value.trim().replace(/\/+$/, '');
-        storage.set({
-            server,
-            notifyLevel: notifySelect.value,
-            skippingEnabled: skippingToggle.checked,
-        }).then(() => {
-            serverInput.value = server;
-            skippingEnabled = skippingToggle.checked;
-            showToast('Settings saved', 'success');
-            refreshAnalysisStatus(skippingEnabled);
-        });
+    document.getElementById('save-server').addEventListener('click', () => {
+        saveServerOverride(storage, serverInput, skippingEnabled);
+    });
+
+    document.getElementById('reset-server').addEventListener('click', () => {
+        serverInput.value = '';
+        saveServerOverride(storage, serverInput, skippingEnabled);
     });
 
     notifySelect.addEventListener('change', () => {
@@ -177,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     serverInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
-            document.getElementById('save').click();
+            document.getElementById('save-server').click();
         }
     });
 

@@ -10,6 +10,7 @@ alwaysApply: false
 
 - `plugin/` is the single loadable extension root for **Firefox and Chrome** — no per-browser forks.
 - `ext.js` is the only place for `browser` / `chrome` branching; other files call `getStorage()`.
+- `config.js` holds `DEFAULT_API_BASE` and `resolveApiUrl()` — load after `ext.js` in manifest and popup.
 - Do not add build tooling or repo docs inside `plugin/` unless the extension needs them at runtime.
 
 ## Cross-browser APIs
@@ -32,7 +33,7 @@ Load `ext.js` before `processor.js` (manifest `content_scripts`) and before `pop
 
 ## Content script (`processor.js`)
 
-- Polls storage for the server base URL; appends `/api/v2/timestamps` — never hardcode full API URLs in popup placeholder text.
+- Resolves API base via `resolveApiUrl(storage.server)` — custom override when set, else `DEFAULT_API_BASE` from `config.js`; appends `/api/v2/timestamps`.
 - Detects SPA navigation via History API hooks + URL polling — preserve this when refactoring video-change detection.
 - Skip check uses throttled `timeupdate` on the active `<video>` (250ms); clear listeners in `stopTracking()` before re-attaching on video change.
 - Skip toasts live in `notifications.js`; level stored as `notifyLevel` (`off` | `minimal` | `detailed`).
@@ -43,7 +44,8 @@ Load `ext.js` before `processor.js` (manifest `content_scripts`) and before `pop
 
 ## Popup (`popup.js` / `popup.html`)
 
-- Server URL is the **base origin** only (e.g. `https://api.example.com`), saved to `storage.sync` under key `server`.
+- Default API is `DEFAULT_API_BASE` in `config.js`; optional override saved to `storage.sync` key `server` (blank = default).
+- Server override lives under collapsed **Advanced** (`<details>`); main popup stays install-and-go.
 - Register event listeners once (inside `DOMContentLoaded`).
 
 ## Testing checklist

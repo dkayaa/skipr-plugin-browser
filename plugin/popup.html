@@ -212,6 +212,50 @@
             box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.2);
         }
 
+        .advanced {
+            margin-top: 4px;
+            border-top: 1px solid var(--border);
+            padding-top: 12px;
+        }
+
+        .advanced summary {
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            list-style: none;
+            user-select: none;
+        }
+
+        .advanced summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .advanced summary::before {
+            content: '▸ ';
+            display: inline-block;
+            transition: transform 0.15s;
+        }
+
+        .advanced[open] summary::before {
+            transform: rotate(90deg);
+        }
+
+        .advanced-body {
+            margin-top: 12px;
+        }
+
+        .advanced-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .advanced-actions .btn-primary,
+        .advanced-actions .btn-secondary {
+            flex: 1;
+        }
+
         @keyframes pulse {
             0%,
             100% {
@@ -503,15 +547,6 @@
         </section>
 
         <section class="section">
-            <label class="section-label" for="server">API server</label>
-            <p class="hint">Base URL only — Skippy appends <code>/api/v2/timestamps</code></p>
-            <div class="input-row">
-                <input type="text" id="server" placeholder="http://localhost:8090" spellcheck="false">
-                <button id="save" class="btn-primary" type="button">Save</button>
-            </div>
-        </section>
-
-        <section class="section">
             <label class="section-label" for="notify-level">Skip notifications</label>
             <p class="hint">Brief on-player toast when a segment is skipped</p>
             <select id="notify-level">
@@ -533,9 +568,25 @@
             </div>
             <button id="retry" class="btn-secondary" type="button">Try again</button>
         </section>
+
+        <details class="advanced" id="advanced-settings">
+            <summary>Advanced</summary>
+            <div class="advanced-body">
+                <label class="section-label" for="server">API server override</label>
+                <p class="hint">Leave blank to use the default (<code id="default-server-label"></code>). Base URL only — Skippy appends <code>/api/v2/timestamps</code>.</p>
+                <div class="input-row">
+                    <input type="text" id="server" placeholder="" spellcheck="false" autocomplete="off">
+                </div>
+                <div class="advanced-actions">
+                    <button id="save-server" class="btn-primary" type="button">Save server</button>
+                    <button id="reset-server" class="btn-secondary" type="button">Use default</button>
+                </div>
+            </div>
+        </details>
     </div>
 
     <script src="ext.js"></script>
+    <script src="config.js"></script>
     <script src="popup.js"></script>
 
 </body>

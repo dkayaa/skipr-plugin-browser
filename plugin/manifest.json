@@ -38,6 +38,7 @@
             ],
             "js": [
                 "ext.js",
+                "config.js",
                 "notifications.js",
                 "processor.js"
             ]
