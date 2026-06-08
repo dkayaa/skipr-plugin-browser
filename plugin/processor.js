@@ -15,6 +15,7 @@ let pendingPollTimeout = null;
 let fetchGeneration = 0;
 let analysisState = { status: 'idle', error: null, link: null };
 let notifyLevel = 'minimal';
+let skippingEnabled = true;
 
 const NOTIFY_LEVELS = new Set(['off', 'minimal', 'detailed']);
 
@@ -145,8 +146,15 @@ function stopTracking() {
     trackedVideo = null;
 }
 
+function syncSkippingState() {
+    ext.runtime.sendMessage({
+        type: 'skipping-enabled',
+        enabled: skippingEnabled,
+    }).catch(() => {});
+}
+
 function checkAndSkip(video) {
-    if (!video || !video.isConnected) {
+    if (!skippingEnabled || !video || !video.isConnected) {
         return;
     }
 
@@ -228,15 +236,18 @@ function waitForVideo() {
 }
 
 function loadSettings() {
-    return getStorage().get(['server', 'notifyLevel'])
+    return getStorage().get(['server', 'notifyLevel', 'skippingEnabled'])
         .then((result) => {
             const nextUrl = normalizeApiUrl(result.server || '');
             const nextNotify = NOTIFY_LEVELS.has(result.notifyLevel) ? result.notifyLevel : 'minimal';
+            const nextSkipping = result.skippingEnabled !== false;
             const urlChanged = nextUrl !== api_url;
             const notifyChanged = nextNotify !== notifyLevel;
+            const skippingChanged = nextSkipping !== skippingEnabled;
 
             api_url = nextUrl;
             notifyLevel = nextNotify;
+            skippingEnabled = nextSkipping;
 
             if (urlChanged) {
                 console.log("[YouTube Tracker] API URL updated:", api_url || '(not set)');
@@ -244,6 +255,11 @@ function loadSettings() {
 
             if (notifyChanged) {
                 console.log("[YouTube Tracker] Notification level:", notifyLevel);
+            }
+
+            if (skippingChanged) {
+                console.log("[YouTube Tracker] Interval skipping:", skippingEnabled ? 'enabled' : 'disabled');
+                syncSkippingState();
             }
 
             if (urlChanged && video_ref) {
@@ -257,6 +273,7 @@ function loadSettings() {
 
 function init() {
     loadSettings().then(() => {
+        syncSkippingState();
         if (currentVideoId) {
             waitForVideo();
         }

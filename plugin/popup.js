@@ -62,7 +62,20 @@ function setStatusIcon(kind) {
     icon.textContent = '';
 }
 
-function updateAnalysisUI(state) {
+function updatePausedPill() {
+    const pill = document.getElementById('status-pill');
+    const label = document.getElementById('status-label');
+    pill.className = 'status-pill paused';
+    label.textContent = 'Paused';
+    document.getElementById('analysis-status').hidden = true;
+}
+
+function updateAnalysisUI(state, skippingEnabled = true) {
+    if (skippingEnabled === false && state?.status === 'ready') {
+        updatePausedPill();
+        return;
+    }
+
     const status = state?.status || 'idle';
     const copy = STATUS_COPY[status] || STATUS_COPY.idle;
 
@@ -105,28 +118,33 @@ function sendToActiveTab(message) {
     });
 }
 
-function refreshAnalysisStatus() {
+function refreshAnalysisStatus(skippingEnabled = true) {
     return sendToActiveTab({ type: 'get-status' })
         .then((state) => {
-            updateAnalysisUI(state || { status: 'idle' });
+            updateAnalysisUI(state || { status: 'idle' }, skippingEnabled);
         })
         .catch(() => {
-            updateAnalysisUI({ status: 'idle' });
+            updateAnalysisUI({ status: 'idle' }, skippingEnabled);
         });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     const serverInput = document.getElementById('server');
     const notifySelect = document.getElementById('notify-level');
+    const skippingToggle = document.getElementById('skipping-enabled');
     const storage = getStorage();
+    let skippingEnabled = true;
 
-    storage.get(['server', 'notifyLevel']).then((result) => {
+    storage.get(['server', 'notifyLevel', 'skippingEnabled']).then((result) => {
         if (result.server) {
             serverInput.value = result.server;
         }
         if (result.notifyLevel) {
             notifySelect.value = result.notifyLevel;
         }
+        skippingEnabled = result.skippingEnabled !== false;
+        skippingToggle.checked = skippingEnabled;
+        refreshAnalysisStatus(skippingEnabled);
     });
 
     document.getElementById('save').addEventListener('click', () => {
@@ -134,15 +152,26 @@ document.addEventListener('DOMContentLoaded', () => {
         storage.set({
             server,
             notifyLevel: notifySelect.value,
+            skippingEnabled: skippingToggle.checked,
         }).then(() => {
             serverInput.value = server;
+            skippingEnabled = skippingToggle.checked;
             showToast('Settings saved', 'success');
+            refreshAnalysisStatus(skippingEnabled);
         });
     });
 
     notifySelect.addEventListener('change', () => {
         storage.set({ notifyLevel: notifySelect.value }).then(() => {
             showToast('Notification preference saved', 'success');
+        });
+    });
+
+    skippingToggle.addEventListener('change', () => {
+        skippingEnabled = skippingToggle.checked;
+        storage.set({ skippingEnabled }).then(() => {
+            showToast(skippingEnabled ? 'Auto-skip enabled' : 'Auto-skip paused', 'success');
+            refreshAnalysisStatus(skippingEnabled);
         });
     });
 
@@ -168,9 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     ext.runtime.onMessage.addListener((message) => {
         if (message.type === 'analysis-status') {
-            updateAnalysisUI(message);
+            updateAnalysisUI(message, skippingEnabled);
         }
     });
-
-    refreshAnalysisStatus();
 });
