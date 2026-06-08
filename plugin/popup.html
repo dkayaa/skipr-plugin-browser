@@ -50,17 +50,9 @@
             width: 36px;
             height: 36px;
             border-radius: 9px;
-            background: linear-gradient(135deg, var(--accent), #c81e1e);
-            display: grid;
-            place-items: center;
             box-shadow: var(--shadow);
             flex-shrink: 0;
-        }
-
-        .logo svg {
-            width: 18px;
-            height: 18px;
-            fill: white;
+            display: block;
         }
 
         .header-text h1 {
@@ -517,11 +509,7 @@
 <body>
     <div class="popup">
         <header class="header">
-            <div class="logo" aria-hidden="true">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 5v14l11-7L8 5z" />
-                </svg>
-            </div>
+            <img class="logo" src="icons/icon-48.png" width="36" height="36" alt="">
             <div class="header-text">
                 <h1>Skippy</h1>
                 <p>Skip sponsor segments on YouTube</p>
