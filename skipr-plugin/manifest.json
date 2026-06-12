@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Skipr",
-    "version": "1.8",
+    "version": "1.9",
     "description": "Skips Video Content on Youtube Videos",
     "browser_specific_settings": {
         "gecko": {
@@ -20,9 +20,7 @@
         "tabs"
     ],
     "host_permissions": [
-        "https://*/*",
-        "http://localhost:*/*",
-        "http://127.0.0.1:*/*"
+        "https://skipr-plugin.com/*"
     ],
     "background": {
         "service_worker": "background.js"
