@@ -34,6 +34,7 @@ Load `ext.js` before `processor.js` (manifest `content_scripts`) and before `pop
 ## Content script (`processor.js`)
 
 - Resolves API base via `resolveApiUrl(storage.server)` — custom override when set, else `DEFAULT_API_BASE` from `config.js`; appends `/api/v2/timestamps`.
+- API `fetch` runs in `background.js` (`fetch-timestamps` message) — not from the content script; avoids Chrome Private Network Access blocking localhost from `youtube.com`.
 - Detects SPA navigation via History API hooks + URL polling — preserve this when refactoring video-change detection.
 - Skip check uses throttled `timeupdate` on the active `<video>` (250ms); clear listeners in `stopTracking()` before re-attaching on video change.
 - Skip toasts live in `notifications.js`; level stored as `notifyLevel` (`off` | `minimal` | `detailed`).

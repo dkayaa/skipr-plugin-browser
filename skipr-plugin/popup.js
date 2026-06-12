@@ -62,6 +62,46 @@ function setStatusIcon(kind) {
     icon.textContent = '';
 }
 
+function formatTime(seconds) {
+    const total = Math.max(0, Math.floor(seconds));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    return [h, m, s].map((n) => String(n).padStart(2, '0')).join(':');
+}
+
+function updateIntervalsUI(intervals, status) {
+    const section = document.getElementById('segments-section');
+    const list = document.getElementById('segments-list');
+
+    if (status !== 'ready' || !intervals?.length) {
+        section.hidden = true;
+        list.replaceChildren();
+        return;
+    }
+
+    section.hidden = false;
+    list.replaceChildren();
+
+    intervals.forEach((segment) => {
+        const item = document.createElement('li');
+        item.className = 'segment-item';
+
+        const timeEl = document.createElement('span');
+        timeEl.className = 'segment-time';
+        timeEl.textContent = formatTime(segment.start_time) + ' – ' + formatTime(segment.end_time);
+
+        const orgsEl = document.createElement('span');
+        orgsEl.className = 'segment-orgs';
+        orgsEl.textContent = segment.orgs?.length
+            ? segment.orgs.join(', ')
+            : 'Unknown sponsor';
+
+        item.append(timeEl, orgsEl);
+        list.append(item);
+    });
+}
+
 function updatePausedPill() {
     const pill = document.getElementById('status-pill');
     const label = document.getElementById('status-label');
@@ -71,12 +111,15 @@ function updatePausedPill() {
 }
 
 function updateAnalysisUI(state, skippingEnabled = true) {
-    if (skippingEnabled === false && state?.status === 'ready') {
+    const status = state?.status || 'idle';
+
+    if (skippingEnabled === false && status === 'ready') {
         updatePausedPill();
+        updateIntervalsUI(state.intervals, status);
         return;
     }
 
-    const status = state?.status || 'idle';
+    updateIntervalsUI(state.intervals, status);
     const copy = STATUS_COPY[status] || STATUS_COPY.idle;
 
     const pill = document.getElementById('status-pill');
@@ -197,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     showToast(response?.error || 'Could not retry', 'error');
                     return;
                 }
-                updateAnalysisUI({ status: 'pending', error: null });
+                updateAnalysisUI({ status: 'pending', error: null, intervals: [] });
             })
             .catch(() => {
                 showToast('Open a YouTube watch page first', 'error');

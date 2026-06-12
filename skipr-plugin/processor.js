@@ -13,7 +13,7 @@ let skipHandler = null;
 let waitVideoTimeout = null;
 let pendingPollTimeout = null;
 let fetchGeneration = 0;
-let analysisState = { status: 'idle', error: null, link: null };
+let analysisState = { status: 'idle', error: null, link: null, intervals: [] };
 let notifyLevel = 'minimal';
 let skippingEnabled = true;
 
@@ -53,12 +53,18 @@ function isStaleFetch(link, generation) {
 }
 
 function setAnalysisState(status, error = null) {
-    analysisState = { status, error, link: video_ref || null };
+    analysisState = {
+        status,
+        error,
+        link: video_ref || null,
+        intervals: status === 'ready' ? timestamps.map((segment) => ({ ...segment })) : [],
+    };
     ext.runtime.sendMessage({
         type: 'analysis-status',
         status: analysisState.status,
         error: analysisState.error,
         link: analysisState.link,
+        intervals: analysisState.intervals,
     }).catch(() => {});
 }
 
@@ -74,30 +80,35 @@ function buildTimestampsUrl(link, { retry = false } = {}) {
 function schedulePendingPoll(link, generation) {
     cancelPendingPoll();
     pendingPollTimeout = setTimeout(() => {
+        if (isStaleFetch(link, generation) || analysisState.status === 'failed') {
+            return;
+        }
         fetchTimestamps(link, generation);
     }, ANALYSIS_POLL_MS);
+}
+
+function requestTimestamps(url) {
+    return ext.runtime.sendMessage({ type: 'fetch-timestamps', url });
 }
 
 function fetchTimestamps(link, generation, { retry = false } = {}) {
     const url = buildTimestampsUrl(link, { retry });
     console.log("[Skipr] Sending GET request to:", url);
 
-    fetch(url, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-    })
-        .then((response) => {
-            return response.json().then((data) => ({ response, data }));
-        })
-        .then(({ response, data }) => {
+    requestTimestamps(url)
+        .then((result) => {
             if (isStaleFetch(link, generation)) {
                 console.log("[Skipr] Ignoring stale response for:", link);
                 return;
             }
 
-            if (response.status === 202 || data.status === 'pending') {
+            if (!result?.ok) {
+                throw new Error(result?.error || 'Fetch failed');
+            }
+
+            const { status, data } = result;
+
+            if (status === 202 || data.status === 'pending') {
                 setAnalysisState('pending');
                 console.log("[Skipr] Analysis pending, polling again in", ANALYSIS_POLL_MS, "ms");
                 schedulePendingPoll(link, generation);
@@ -105,27 +116,30 @@ function fetchTimestamps(link, generation, { retry = false } = {}) {
             }
 
             if (data.status === 'failed') {
+                cancelPendingPoll();
                 const error = data.error || 'Analysis failed';
                 setAnalysisState('failed', error);
                 console.error("[Skipr] Analysis failed:", error);
                 return;
             }
 
-            if (!response.ok) {
-                throw new Error('HTTP ' + response.status);
+            if (status < 200 || status >= 300) {
+                throw new Error('HTTP ' + status);
             }
 
             if (data.status === 'ready') {
+                cancelPendingPoll();
                 timestamps = parseIntervals(data);
                 setAnalysisState('ready');
                 console.log('[Skipr] Loaded', timestamps.length, 'skip segment(s)');
                 return;
             }
 
-            console.warn("[Skipr] Unexpected response:", response.status, data);
+            console.warn("[Skipr] Unexpected response:", status, data);
         })
         .catch((error) => {
             if (!isStaleFetch(link, generation)) {
+                cancelPendingPoll();
                 console.error("[Skipr] GET request error:", error);
             }
         });

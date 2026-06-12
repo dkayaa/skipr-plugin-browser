@@ -1,4 +1,4 @@
-const DEFAULT_API_BASE = 'http://localhost:8090';
+const DEFAULT_API_BASE = 'https://skipr-plugin.com';
 
 function normalizeApiUrl(url) {
     if (!url) {

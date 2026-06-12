@@ -503,6 +503,45 @@
                 transform: translateY(0);
             }
         }
+
+        .segments-section {
+            margin-top: 12px;
+        }
+
+        .segments-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .segment-item {
+            padding: 10px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .segment-item:first-child {
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .segment-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .segment-time {
+            display: block;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .segment-orgs {
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+        }
     </style>
 </head>
 
@@ -545,6 +584,11 @@
         </section>
 
         <div id="toast" class="toast" hidden></div>
+
+        <section id="segments-section" class="section segments-section" hidden>
+            <label class="section-label">Ad segments</label>
+            <ul id="segments-list" class="segments-list"></ul>
+        </section>
 
         <section id="analysis-status" class="status-card" hidden>
             <div class="status-header">

@@ -32,7 +32,30 @@ function applyBadge() {
     updateBadge(status);
 }
 
-ext.runtime.onMessage.addListener((message) => {
+function fetchTimestampsApi(url) {
+    return fetch(url, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+    })
+        .then((response) => response.json().then((data) => ({
+            ok: true,
+            status: response.status,
+            data,
+        })))
+        .catch((error) => ({
+            ok: false,
+            error: error.message || 'Network request failed',
+        }));
+}
+
+ext.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message.type === 'fetch-timestamps') {
+        fetchTimestampsApi(message.url).then(sendResponse);
+        return true;
+    }
+
     if (message.type === 'skipping-enabled') {
         skippingEnabled = message.enabled !== false;
         applyBadge();
