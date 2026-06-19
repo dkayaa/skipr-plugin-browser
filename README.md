@@ -1,8 +1,10 @@
-# Skipr
+# Skipr-plugin
 
 A browser extension that auto-skips segments of YouTube videos based on timestamps from a backend server.
 
 One codebase, one `skipr-plugin/` folder — load the same build in **Firefox** and **Chrome** (Manifest V3).
+
+**Backend:** [skipr-youtube-api](https://github.com/dkayaa/skipr-youtube-api) — Flask API, ML pipeline, and timestamp storage.
 
 ## How it works
 
@@ -69,7 +71,7 @@ The `skipr-plugin/` directory is the extension root. No separate Chrome repo or 
 ### Prerequisites
 
 - Firefox 109+ and/or Chrome (current)
-- A running Skipr backend that exposes `GET /api/v2/timestamps`
+- A running [skipr-youtube-api](https://github.com/dkayaa/skipr-youtube-api) backend that exposes `GET /api/v2/timestamps`
 
 ### Load unpacked (Firefox)
 
@@ -83,7 +85,7 @@ The `skipr-plugin/` directory is the extension root. No separate Chrome repo or 
 
 ### Configure
 
-1. Click the Skipr toolbar icon
+1. Click the Skipr-plugin toolbar icon
 2. Open **Advanced** only if you need a custom API server (default is in `config.js`)
 3. Open a YouTube video and check the browser console for `[Skipr]` logs
 
@@ -106,7 +108,7 @@ After any change:
 
 ## Permissions
 
-- `host_permissions: https://*/*` — fetch timestamps from the configured server
+- `host_permissions` — fetch timestamps from the configured API server (see `manifest.json`)
 - `storage` — persist settings via `storage.sync`
 
 ## Notes
