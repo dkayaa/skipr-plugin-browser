@@ -11,11 +11,14 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "skipr-plugin" / "icons"
 SIZES = (16, 32, 48, 128)
 
-GRADIENT_START = (255, 68, 68)
-GRADIENT_END = (200, 30, 30)
-PLAY_PATH_24 = ((8, 5), (8, 19), (19, 12))
-PLAY_CENTER = (13.5, 12.0)
-CORNER_RADIUS_RATIO = 9 / 36
+GRADIENT_START = (99, 102, 241)
+GRADIENT_END = (67, 56, 202)
+CHEVRON_PATHS_48 = (
+    ((11, 13), (11, 35), (21, 24)),
+    ((23, 13), (23, 35), (33, 24)),
+)
+CHEVRON_CENTER = (22.0, 24.0)
+CORNER_RADIUS_RATIO = 12 / 48
 
 
 def _lerp(a: int, b: int, t: float) -> int:
@@ -47,13 +50,15 @@ def make_icon(size: int) -> Image.Image:
 
     center = size / 2
     scale = size / 48
-    offset_x = center - PLAY_CENTER[0] * scale
-    offset_y = center - PLAY_CENTER[1] * scale
-    triangle = [
-        (offset_x + x * scale, offset_y + y * scale)
-        for x, y in PLAY_PATH_24
-    ]
-    ImageDraw.Draw(icon).polygon(triangle, fill=(255, 255, 255, 255))
+    offset_x = center - CHEVRON_CENTER[0] * scale
+    offset_y = center - CHEVRON_CENTER[1] * scale
+    draw = ImageDraw.Draw(icon)
+    for path in CHEVRON_PATHS_48:
+        triangle = [
+            (offset_x + x * scale, offset_y + y * scale)
+            for x, y in path
+        ]
+        draw.polygon(triangle, fill=(255, 255, 255, 255))
     return icon
 
 

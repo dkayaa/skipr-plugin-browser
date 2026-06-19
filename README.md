@@ -96,6 +96,20 @@ After any change:
 1. Reload the extension in **both** browsers' extension managers
 2. Refresh open YouTube tabs (content scripts do not hot-reload)
 
+## CI
+
+GitHub Actions runs on push/PR to `main`:
+
+- **ESLint** — JS lint for `skipr-plugin/`
+- **addons-linter** — manifest validation and WebExtension static analysis (MV3 service worker enabled)
+
+Run locally:
+
+```bash
+npm ci
+npm run ci
+```
+
 ## Making changes
 
 | Change type | Files to edit |

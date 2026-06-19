@@ -1,3 +1,4 @@
+/* exported DEFAULT_API_BASE, normalizeApiUrl, resolveApiUrl */
 const DEFAULT_API_BASE = 'https://skipr-plugin.com';
 
 function normalizeApiUrl(url) {

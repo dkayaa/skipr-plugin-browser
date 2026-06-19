@@ -1,3 +1,4 @@
+/* exported showSkipNotification, hideSkipToast */
 const NOTIFY_TOAST_MS = 2000;
 
 let skipToastEl = null;

@@ -1,3 +1,4 @@
+/* exported getStorage */
 const ext = typeof globalThis.browser !== "undefined" ? globalThis.browser : globalThis.chrome;
 
 function getStorage() {

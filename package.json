@@ -1,0 +1,16 @@
+{
+  "name": "skipr-plugin",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint skipr-plugin/",
+    "lint:manifest": "addons-linter skipr-plugin/ --enable-background-service-worker --min-manifest-version=3 --self-hosted",
+    "ci": "npm run lint && npm run lint:manifest"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "addons-linter": "^7.14.0",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0"
+  }
+}
